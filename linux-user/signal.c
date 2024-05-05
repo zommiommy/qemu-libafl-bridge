@@ -751,8 +751,8 @@ void dump_core_and_abort(CPUArchState *env, int target_sig)
     /* dump core if supported by target binary format */
     if (core_dump_signal(target_sig) && (ts->bprm->core_dump != NULL)) {
         stop_all_tasks();
-        core_dumped =
-            ((*ts->bprm->core_dump)(target_sig, env) == 0);
+        //core_dumped =
+        //    ((*ts->bprm->core_dump)(target_sig, env) == 0);
     }
     if (core_dumped) {
         /* we already dumped the core of target process, we don't want
