@@ -745,6 +745,25 @@ void dump_core_and_abort(CPUArchState *env, int target_sig)
     } else {
         host_sig = target_to_host_signal(target_sig);
     }
+    trace_user_dump_core_and_abort(env, target_sig, host_sig);
+    gdb_signalled(env, target_sig);
+
+    /* dump core if supported by target binary format */
+    if (core_dump_signal(target_sig) && (ts->bprm->core_dump != NULL)) {
+        stop_all_tasks();
+        core_dumped =
+            ((*ts->bprm->core_dump)(target_sig, env) == 0);
+    }
+    if (core_dumped) {
+        /* we already dumped the core of target process, we don't want
+         * a coredump of qemu itself */
+        struct rlimit nodump;
+        getrlimit(RLIMIT_CORE, &nodump);
+        nodump.rlim_cur=0;
+        setrlimit(RLIMIT_CORE, &nodump);
+        (void) fprintf(stderr, "qemu: uncaught target signal %d (%s) - %s\n",
+            target_sig, strsignal(host_sig), "core dumped" );
+    }
 
     preexit_cleanup(env, 128 + target_sig);
     
